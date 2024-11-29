@@ -1,0 +1,17 @@
+.enemy-cards, .board-cards, .player-hand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+  }
+  
+  .card-list {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+  }
+  
+  .card-list > div {
+    margin: 0 10px;
+  }
