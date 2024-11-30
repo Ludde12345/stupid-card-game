@@ -12,6 +12,13 @@
     overflow-x: auto;
   }
   
+  .enemy-cards.fixed {
+    position: fixed;
+    top: 100px; /* Adjust as needed */
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
   .card-list > div {
     margin: 0 10px;
   }

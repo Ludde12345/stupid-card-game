@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Card from './Card';
 import './Game.css'; // Import the new CSS file
@@ -19,38 +19,48 @@ const CardGame = () => {
   const [enemyCards, setEnemyCards] = useState(initialEnemyCards);
   const [playerCards, setPlayerCards] = useState(initialPlayerCards);
   const [boardCards, setBoardCards] = useState(initialBoardCards);
+  const enemyCardRefs = useRef([]);
+  const [draggingCard, setDraggingCard] = useState(null);
 
   const calculateDamage = (playerCard, enemyCard) => {
     // Implement your damage calculation logic here
-    enemyCard.health -= playerCard.attack;
-    playerCard.health -= enemyCard.attack;
+    const updatedEnemyCards = enemyCards.map(card => {
+      if (card.id === enemyCard.id) {
+        return { ...card, health: card.health - playerCard.attack };
+      }
+      return card;
+    }).filter(card => card.health > 0);
+
+    const updatedPlayerCards = playerCards.map(card => {
+      if (card.id === playerCard.id) {
+        return { ...card, health: card.health - enemyCard.attack };
+      }
+      return card;
+    }).filter(card => card.health > 0);
+
+    setEnemyCards(updatedEnemyCards);
+    setPlayerCards(updatedPlayerCards);
 
     console.log(`Calculating damage between ${playerCard.name} and ${enemyCard.name}`);
+    console.log(`Enemy card health: ${enemyCard.health}`);
+    console.log(`Player card health: ${playerCard.health}`);
+  };
+
+  const onDragStart = (start) => {
+    const { source } = start;
+    const sourceList = source.droppableId === 'board' ? [...boardCards] : [...playerCards];
+    const movedCard = sourceList[source.index];
+    setDraggingCard(movedCard);
   };
 
   const onDragEnd = (result) => {
-    const { source, destination, combine } = result;
+    const { source, destination } = result;
 
-    // If there's no destination (dropped outside a list) and no combine, do nothing
-    if (!destination && !combine) return;
+    // If there's no destination (dropped outside a list), do nothing
+    if (!destination) return;
 
     // If the source and destination are the same, do nothing
-    if (destination && source.droppableId === destination.droppableId && source.index === destination.index) return;
-
-    // Handle combining cards
-    if (combine) {
-      const sourceList = source.droppableId === 'board' ? [...boardCards] : [...playerCards];
-      const destinationList = combine.droppableId === 'enemy' ? [...enemyCards] : [...boardCards];
-
-      const movedCard = sourceList[source.index];
-      const combinedCard = destinationList.find(card => card.id === combine.draggableId);
-
-      if (source.droppableId === 'board' && combine.droppableId === 'enemy') {
-        calculateDamage(movedCard, combinedCard);
-      }
-
-      return;
-    }
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
     // Handle movement within the same list
     if (source.droppableId === destination.droppableId) {
@@ -70,100 +80,133 @@ const CardGame = () => {
       setSourceList(sourceList);
       setDestinationList(destinationList);
     }
+
+    setDraggingCard(null);
+  };
+
+  const onMouseUp = (event) => {
+    if (draggingCard) {
+      const mouseX = event.clientX;
+      const mouseY = event.clientY;
+
+      console.log(`Mouse position: (${mouseX}, ${mouseY})`);
+
+      // Check if the mouse is over any enemy card
+      for (let i = 0; i < enemyCardRefs.current.length; i++) {
+        const enemyCardRef = enemyCardRefs.current[i];
+        if (enemyCardRef) {
+          const rect = enemyCardRef.getBoundingClientRect();
+          console.log(`Enemy card ${i} rect:`, rect);
+          if (mouseX >= rect.left && mouseX <= rect.right && mouseY >= rect.top && mouseY <= rect.bottom) {
+            const enemyCard = enemyCards[i];
+            console.log(`Dropping ${draggingCard.name} on ${enemyCard.name}`);
+            calculateDamage(draggingCard, enemyCard);
+            return;
+          }
+        }
+      }
+    }
   };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      {/* Enemy's Cards */}
-      <Droppable droppableId="enemy" direction="horizontal" isCombineEnabled>
-        {(provided) => (
-          <div className="enemy-cards" ref={provided.innerRef} {...provided.droppableProps}>
-            <h3>Enemy's Cards</h3>
-            <div className="card-list">
-              {enemyCards.map((card, index) => (
-                <Draggable key={card.id} draggableId={card.id} index={index} isDragDisabled>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
-                      <Card
-                        name={card.name}
-                        manaCost={card.manaCost}
-                        attack={card.attack}
-                        health={card.health}
-                      />
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
+    <div onMouseUp={onMouseUp}>
+      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+        {/* Enemy's Cards */}
+        <Droppable droppableId="enemy" direction="horizontal" isCombineEnabled isDropDisabled>
+          {(provided) => (
+            <div className="enemy-cards" ref={provided.innerRef} {...provided.droppableProps}>
+              <h3>Enemy's Cards</h3>
+              <div className="card-list">
+                {enemyCards.map((card, index) => (
+                  <Draggable key={card.id} draggableId={card.id} index={index} isDragDisabled>
+                    {(provided) => (
+                      <div
+                        ref={(el) => {
+                          provided.innerRef(el);
+                          enemyCardRefs.current[index] = el;
+                        }}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        style={{ ...provided.draggableProps.style, margin: '0 10px' }}
+                      >
+                        <Card
+                          name={card.name}
+                          manaCost={card.manaCost}
+                          attack={card.attack}
+                          health={card.health}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </Droppable>
+          )}
+        </Droppable>
 
-      {/* Player's Game Board */}
-      <Droppable key="playerboard" droppableId="board" direction="horizontal" isCombineEnabled>
-        {(provided) => (
-          <div className="board-cards" ref={provided.innerRef} {...provided.droppableProps}>
-            <h3>Your Board</h3>
-            <div className="card-list">
-              {boardCards.map((card, index) => (
-                <Draggable key={card.id} draggableId={card.id} index={index}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
-                      <Card
-                        name={card.name}
-                        manaCost={card.manaCost}
-                        attack={card.attack}
-                        health={card.health}
-                      />
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
+        {/* Player's Game Board */}
+        <Droppable key="playerboard" droppableId="board" direction="horizontal" isCombineEnabled>
+          {(provided) => (
+            <div className="board-cards" ref={provided.innerRef} {...provided.droppableProps}>
+              <h3>Your Board</h3>
+              <div className="card-list">
+                {boardCards.map((card, index) => (
+                  <Draggable key={card.id} draggableId={card.id} index={index}>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        style={{ ...provided.draggableProps.style, margin: '0 10px' }}
+                      >
+                        <Card
+                          name={card.name}
+                          manaCost={card.manaCost}
+                          attack={card.attack}
+                          health={card.health}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
             </div>
-          </div>
-        )}
-      </Droppable>
+          )}
+        </Droppable>
 
-      {/* Player's Hand */}
-      <Droppable key="playerhand" droppableId="hand" direction="horizontal">
-        {(provided) => (
-          <div className="player-hand" ref={provided.innerRef} {...provided.droppableProps}>
-            <h3>Your Hand</h3>
-            <div className="card-list">
-              {playerCards.map((card, index) => (
-                <Draggable key={card.id} draggableId={card.id} index={index}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
-                      <Card
-                        name={card.name}
-                        manaCost={card.manaCost}
-                        attack={card.attack}
-                        health={card.health}
-                      />
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
+        {/* Player's Hand */}
+        <Droppable key="playerhand" droppableId="hand" direction="horizontal">
+          {(provided) => (
+            <div className="player-hand" ref={provided.innerRef} {...provided.droppableProps}>
+              <h3>Your Hand</h3>
+              <div className="card-list">
+                {playerCards.map((card, index) => (
+                  <Draggable key={card.id} draggableId={card.id} index={index}>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        style={{ ...provided.draggableProps.style, margin: '0 10px' }}
+                      >
+                        <Card
+                          name={card.name}
+                          manaCost={card.manaCost}
+                          attack={card.attack}
+                          health={card.health}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
             </div>
-          </div>
-        )}
-      </Droppable>
-    </DragDropContext>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </div>
   );
 };
 
