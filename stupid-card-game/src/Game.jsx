@@ -11,9 +11,9 @@ const CardGame = ({ playerId }) => {
   const [playerHand, setPlayerHand] = useState([]);
   const [playerBoard, setPlayerBoard] = useState([]);
   const [currentTurn, setCurrentTurn] = useState('player1');
+  const [manaAmount, setManaAmount] = useState(6);
   const enemyCardRefs = useRef([]);
   const [draggingCard, setDraggingCard] = useState(null);
-  const [manaAmount, setManaAmount] = useState(6);
 
   useEffect(() => {
     socket.on('gameUpdate', (state) => {
@@ -22,6 +22,7 @@ const CardGame = ({ playerId }) => {
       setPlayerHand(state.players[playerId].hand);
       setPlayerBoard(state.players[playerId].board);
       setCurrentTurn(state.turn);
+      setManaAmount(state.players[playerId].manaAmount);
     });
 
     // Request the current game state when the component mounts
@@ -46,63 +47,40 @@ const CardGame = ({ playerId }) => {
 
   const onDragEnd = (result) => {
     const { source, destination } = result;
-  
+
     // If there's no destination (dropped outside a list), do nothing
     if (!destination) return;
-  
+
+    // If it's not the player's turn, do nothing
+    if (currentTurn !== playerId) return;
+
     // If the source and destination are the same, do nothing
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
-  
-    // Get a copy of the source list (either playerHand or playerBoard)
-    const list = source.droppableId === 'hand' ? [...playerHand] : [...playerBoard];
-    
-    // Remove the moved card from the source list (mutate a copy of the list)
-    const [movedCard] = list.splice(source.index, 1);
-  
+
     // Handle movement within the same list
     if (source.droppableId === destination.droppableId) {
+      const list = source.droppableId === 'hand' ? [...playerHand] : [...playerBoard];
       const setList = source.droppableId === 'hand' ? setPlayerHand : setPlayerBoard;
-  
-      // Insert the moved card at the destination index (in the copied list)
+      const [movedCard] = list.splice(source.index, 1);
       list.splice(destination.index, 0, movedCard);
-  
-      // Update the state with the new list
       setList(list);
-    } else if (manaAmount >= movedCard.manaCost) {
-      // Handle movement between lists, checking mana cost
-      setManaAmount(manaAmount - movedCard.manaCost);  // Correct state update for mana
-      console.log("mana cos t", movedCard);
-      console.log(manaAmount)
-  
+    } else {
+      // Handle movement between lists
+      const sourceList = source.droppableId === 'hand' ? [...playerHand] : [...playerBoard];
       const setSourceList = source.droppableId === 'hand' ? setPlayerHand : setPlayerBoard;
-  
-      // Get a copy of the destination list (either playerHand or playerBoard)
       const destinationList = destination.droppableId === 'board' ? [...playerBoard] : [...playerHand];
-  
       const setDestinationList = destination.droppableId === 'board' ? setPlayerBoard : setPlayerHand;
-  
-      // Insert the moved card at the destination index (in the copied destination list)
+      const [movedCard] = sourceList.splice(source.index, 1);
       destinationList.splice(destination.index, 0, movedCard);
-  
-      // Update both the source and destination lists
-      setSourceList(list);
+      setSourceList(sourceList);
       setDestinationList(destinationList);
 
-      
-  
       // Emit an event to the server to update the game state
-      socket.emit('moveCard', {
-        playerId,
-        cardId: movedCard.id,
-        source: source.droppableId,
-        destination: destination.droppableId,
-      });
+      socket.emit('moveCard', { playerId, cardId: movedCard.id, source: source.droppableId, destination: destination.droppableId });
     }
-  
-    // Reset dragging state
+
     setDraggingCard(null);
   };
-  
 
   const onMouseUp = (event) => {
     if (draggingCard) {
@@ -134,7 +112,6 @@ const CardGame = ({ playerId }) => {
 
   const endTurn = () => {
     socket.emit('endTurn');
-    setManaAmount(6);
   };
 
   return (
@@ -177,39 +154,40 @@ const CardGame = ({ playerId }) => {
             </div>
           )}
         </Droppable>
-        {/* Player's Game Board */}
-        <Droppable key="playerBoard" droppableId="board" direction="horizontal" isCombineEnabled>
-          {(provided) => (
-            <div className="board-cards" ref={provided.innerRef} {...provided.droppableProps}>
-              <h3>Your Board</h3>
-              <div className="card-list">
-                {playerBoard.map((card, index) => (
-                  <Draggable key={card.id} draggableId={card.id} index={index} isDragDisabled={currentTurn !== playerId || !card.readyToAttack}>
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        style={{ ...provided.draggableProps.style, margin: '0 10px' }}
-                      >
-                        <Card
-                          name={card.name}
-                          manaCost={card.manaCost}
-                          attack={card.attack}
-                          health={card.health}
-                          imageSource={card.imageSource}
-                          readyToAttack={card.readyToAttack}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
+          {/* Player's Game Board */}
+          <Droppable key="playerBoard" droppableId="board" direction="horizontal" isCombineEnabled>
+            {(provided) => (
+              <div className="board-cards" ref={provided.innerRef} {...provided.droppableProps}>
+                <h3>Your Board</h3>
+                <div className="card-list">
+                  {playerBoard.map((card, index) => (
+                    <Draggable key={card.id} draggableId={card.id} index={index} isDragDisabled={currentTurn !== playerId || !card.readyToAttack}>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          style={{ ...provided.draggableProps.style, margin: '0 10px' }}
+                        >
+                          <Card
+                            name={card.name}
+                            manaCost={card.manaCost}
+                            attack={card.attack}
+                            health={card.health}
+                            imageSource={card.imageSource}
+                            readyToAttack={card.readyToAttack}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
               </div>
-            </div>
-          )}
-        </Droppable>
-        <h1 className="mana-amount">{manaAmount}</h1>
+            )}
+          </Droppable>
+          <h1 className="mana-amount">Mana: {manaAmount}</h1>
+
         {/* Player's Hand */}
         <Droppable key="playerHand" droppableId="hand" direction="horizontal">
           {(provided) => (

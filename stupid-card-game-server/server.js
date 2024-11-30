@@ -88,8 +88,8 @@ function newTurn() {
 
 let initialGameState = {
   players: {
-    player1: { hand: [], board: [], deck: [], health: 20, initialized: false },
-    player2: { hand: [], board: [], deck: [], health: 20, initialized: false },
+    player1: { hand: [], board: [], deck: [], health: 20, initialized: false, manaAmount: 6 },
+    player2: { hand: [], board: [], deck: [], health: 20, initialized: false, manaAmount: 6 },
   },
   turn: 'player1',
 };
@@ -142,11 +142,22 @@ io.on('connection', (socket) => {
   socket.on('moveCard', ({ playerId, cardId, source, destination }) => {
     const player = gameState.players[playerId];
 
+    // Check if it's the player's turn
+    if (gameState.turn !== playerId) {
+      return;
+    }
+
     if (source === 'hand' && destination === 'board') {
       const cardIndex = player.hand.findIndex(card => card.id === cardId);
       if (cardIndex !== -1) {
         const [movedCard] = player.hand.splice(cardIndex, 1); // Remove the card from the hand
-        player.board.push(movedCard); // Add the card to the board
+        if (player.manaAmount >= movedCard.manaCost) {
+          player.manaAmount -= movedCard.manaCost; // Deduct mana cost
+          player.board.push(movedCard); // Add the card to the board
+        } else {
+          // If not enough mana, return the card to the hand
+          player.hand.splice(cardIndex, 0, movedCard);
+        }
       }
     } else if (source === 'board' && destination === 'hand') {
       const cardIndex = player.board.findIndex(card => card.id === cardId && card.readyToAttack);
