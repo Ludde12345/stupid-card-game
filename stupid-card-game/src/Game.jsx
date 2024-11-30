@@ -1,27 +1,61 @@
-import React, { useState, useRef, useEffect} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Card from './Card';
 import './Game.css'; // Import the new CSS file
+import cards from './CardStats.json';
 
-const initialEnemyCards = [
-  { id: 'e1', name: 'Enemy Card 1', manaCost: 3, attack: 2, health: 5 },
-  { id: 'e2', name: 'Enemy Card 2', manaCost: 4, attack: 3, health: 4 },
-];
+function createCard(nameOfCard) {
+  const cardToReturn = cards.find(card => card.name === nameOfCard);
 
-const initialPlayerCards = [
-  { id: 'p1', name: 'Player Card 1', manaCost: 2, attack: 4, health: 3 },
-  { id: 'p2', name: 'Player Card 2', manaCost: 1, attack: 1, health: 2 },
-];
+  if (cardToReturn) {
+    // Create a new object based on the card, and add the id to it
+    return {
+      ...cardToReturn,
+      id: String(Math.random())  // Add id to the new object
+    };
+  }
 
-const initialBoardCards = [];
+  return null;  // Returns null if the card was not found
+}
+
+const deck =
+  [
+    createCard("Vacume"),
+    createCard("Vacume"),
+    createCard("Mopp"),
+    createCard("Mopp"),
+    createCard("Mopp"),
+    createCard("Frying-pan"),
+    createCard("Frying-pan"),
+    createCard("Hardhat"),
+    createCard("Hardhat"),
+    createCard("Hardhat")
+  ]
 
 
 const CardGame = () => {
-  const [enemyCards, setEnemyCards] = useState(initialEnemyCards);
-  const [playerCards, setPlayerCards] = useState(initialPlayerCards);
-  const [boardCards, setBoardCards] = useState(initialBoardCards);
+  const [enemyCards, setEnemyCards] = useState([]);
+  const [playerHand, setPlayerHand] = useState([]);
+  const [boardCards, setBoardCards] = useState([]);
   const enemyCardRefs = useRef([]);
   const [draggingCard, setDraggingCard] = useState(null);
+  const [playerDeck, setPlayerDeck] = useState(deck);
+
+  function fillHand() {
+    const newHand = [...playerHand];  // Create a copy of the current playerHand
+    const newDeck = [...playerDeck];  // Create a copy of the current playerDeck
+
+    while (newHand.length < 5 && newDeck.length > 0) {  // Ensure we don't exceed 5 cards in hand
+      const chosenNumber = Math.floor(Math.random() * newDeck.length);
+      const chosenCard = newDeck[chosenNumber];
+
+      newHand.push(chosenCard);  // Add chosen card to hand
+      newDeck.splice(chosenNumber, 1);  // Remove the chosen card from the deck
+    }
+
+    setPlayerHand(newHand);  // Update the player hand state
+    setPlayerDeck(newDeck);  // Update the player deck state
+  }
 
   useEffect(() => {
     // Initialize data or perform any setup tasks here
@@ -29,6 +63,7 @@ const CardGame = () => {
     console.log('Player cards:', enemyCards);
     // Example: Fetch initial data from an API
     // fetchInitialData();
+    fillHand();
   }, []);
 
   const calculateDamage = (playerCard, enemyCard) => {
@@ -40,7 +75,7 @@ const CardGame = () => {
       return card;
     }).filter(card => card.health > 0);
 
-    const updatedPlayerCards = playerCards.map(card => {
+    const updatedPlayerCards = playerHand.map(card => {
       if (card.id === playerCard.id) {
         return { ...card, health: card.health - enemyCard.attack };
       }
@@ -48,7 +83,7 @@ const CardGame = () => {
     }).filter(card => card.health > 0);
 
     setEnemyCards(updatedEnemyCards);
-    setPlayerCards(updatedPlayerCards);
+    setPlayerHand(updatedPlayerCards);
 
     console.log(`Calculating damage between ${playerCard.name} and ${enemyCard.name}`);
     console.log(`Enemy card health: ${enemyCard.health}`);
@@ -57,7 +92,7 @@ const CardGame = () => {
 
   const onDragStart = (start) => {
     const { source } = start;
-    const sourceList = source.droppableId === 'board' ? [...boardCards] : [...playerCards];
+    const sourceList = source.droppableId === 'board' ? [...boardCards] : [...playerHand];
     const movedCard = sourceList[source.index];
     setDraggingCard(movedCard);
   };
@@ -73,17 +108,17 @@ const CardGame = () => {
 
     // Handle movement within the same list
     if (source.droppableId === destination.droppableId) {
-      const list = source.droppableId === 'hand' ? [...playerCards] : [...boardCards];
-      const setList = source.droppableId === 'hand' ? setPlayerCards : setBoardCards;
+      const list = source.droppableId === 'hand' ? [...playerHand] : [...boardCards];
+      const setList = source.droppableId === 'hand' ? setPlayerHand : setBoardCards;
       const [movedCard] = list.splice(source.index, 1);
       list.splice(destination.index, 0, movedCard);
       setList(list);
     } else {
       // Handle movement between lists
-      const sourceList = source.droppableId === 'hand' ? [...playerCards] : [...boardCards];
-      const setSourceList = source.droppableId === 'hand' ? setPlayerCards : setBoardCards;
-      const destinationList = destination.droppableId === 'board' ? [...boardCards] : [...playerCards];
-      const setDestinationList = destination.droppableId === 'board' ? setBoardCards : setPlayerCards;
+      const sourceList = source.droppableId === 'hand' ? [...playerHand] : [...boardCards];
+      const setSourceList = source.droppableId === 'hand' ? setPlayerHand : setBoardCards;
+      const destinationList = destination.droppableId === 'board' ? [...boardCards] : [...playerHand];
+      const setDestinationList = destination.droppableId === 'board' ? setBoardCards : setPlayerHand;
       const [movedCard] = sourceList.splice(source.index, 1);
       destinationList.splice(destination.index, 0, movedCard);
       setSourceList(sourceList);
@@ -190,7 +225,7 @@ const CardGame = () => {
             <div className="player-hand" ref={provided.innerRef} {...provided.droppableProps}>
               <h3>Your Hand</h3>
               <div className="card-list">
-                {playerCards.map((card, index) => (
+                {playerHand.map((card, index) => (
                   <Draggable key={card.id} draggableId={card.id} index={index}>
                     {(provided) => (
                       <div

@@ -1,0 +1,47 @@
+[
+    {
+        "id": null,
+        "name": "Vacume",
+        "manaCost": 4,
+        "attack": 4,
+        "health": 6,
+        "elements": [
+            "cleanliness",
+            "electronic"
+        ]
+    },
+    {
+        "id": null,
+        "name": "Mopp",
+        "manaCost": 2,
+        "attack": 2,
+        "health": 2,
+        "elements": [
+            "cleanliness",
+            "physical",
+            "water"
+        ]
+    },
+    {
+        "id": null,
+        "name": "Frying-pan",
+        "manaCost": 3,
+        "attack": 5,
+        "health": 2,
+        "elements": [
+            "cooking",
+            "physical"
+        ]
+    },
+    {
+        "id": null,
+        "name": "Hardhat",
+        "manaCost": 3,
+        "attack": 2,
+        "health": 4,
+        "elements": [
+            "infrastructure",
+            "defense"
+        ]
+    }
+]
