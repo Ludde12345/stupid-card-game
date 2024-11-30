@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect} from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Card from './Card';
 import './Game.css'; // Import the new CSS file
@@ -15,12 +15,21 @@ const initialPlayerCards = [
 
 const initialBoardCards = [];
 
+
 const CardGame = () => {
   const [enemyCards, setEnemyCards] = useState(initialEnemyCards);
   const [playerCards, setPlayerCards] = useState(initialPlayerCards);
   const [boardCards, setBoardCards] = useState(initialBoardCards);
   const enemyCardRefs = useRef([]);
   const [draggingCard, setDraggingCard] = useState(null);
+
+  useEffect(() => {
+    // Initialize data or perform any setup tasks here
+    console.log('Component mounted');
+    console.log('Player cards:', enemyCards);
+    // Example: Fetch initial data from an API
+    // fetchInitialData();
+  }, []);
 
   const calculateDamage = (playerCard, enemyCard) => {
     // Implement your damage calculation logic here
