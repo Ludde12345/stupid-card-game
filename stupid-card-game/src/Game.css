@@ -3,6 +3,12 @@
     flex-direction: column;
     align-items: center;
     margin: 20px 0;
+    padding: 1px;
+
+    max-width: 100vw;
+    min-width: 100vw;
+    max-height: 33vh;
+    min-height: 33vh;
   }
   
   .card-list {
@@ -10,13 +16,20 @@
     flex-direction: row;
     align-items: center;
     overflow-x: auto;
+    padding: 1px;
+  }
+
+  h3{
+    margin: 1px;
+    padding: 1px;
   }
   
   .enemy-cards.fixed {
     position: fixed;
     top: 100px; /* Adjust as needed */
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%); 
+    padding: 1px;
   }
   
   .card-list > div {

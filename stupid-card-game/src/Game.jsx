@@ -25,8 +25,8 @@ const deck =
     createCard("Mopp"),
     createCard("Mopp"),
     createCard("Mopp"),
-    createCard("Frying-pan"),
-    createCard("Frying-pan"),
+    createCard("Pan"),
+    createCard("Pan"),
     createCard("Hardhat"),
     createCard("Hardhat"),
     createCard("Hardhat")
@@ -41,6 +41,8 @@ const CardGame = () => {
   const [draggingCard, setDraggingCard] = useState(null);
   const [playerDeck, setPlayerDeck] = useState(deck);
 
+  let manaAmount = 0;
+
   function fillHand() {
     const newHand = [...playerHand];  // Create a copy of the current playerHand
     const newDeck = [...playerDeck];  // Create a copy of the current playerDeck
@@ -48,6 +50,7 @@ const CardGame = () => {
     while (newHand.length < 5 && newDeck.length > 0) {  // Ensure we don't exceed 5 cards in hand
       const chosenNumber = Math.floor(Math.random() * newDeck.length);
       const chosenCard = newDeck[chosenNumber];
+      chosenCard.readyToAttack = false;
 
       newHand.push(chosenCard);  // Add chosen card to hand
       newDeck.splice(chosenNumber, 1);  // Remove the chosen card from the deck
@@ -57,13 +60,25 @@ const CardGame = () => {
     setPlayerDeck(newDeck);  // Update the player deck state
   }
 
+  function newTurn()
+  {
+    console.log("new turn");
+    fillHand();
+    manaAmount = 6;
+
+    //Make cards in hand ready to attack
+    boardCards.forEach(card => {
+      card.readyToAttack = true;
+    });
+  }
+
   useEffect(() => {
     // Initialize data or perform any setup tasks here
     console.log('Component mounted');
     console.log('Player cards:', enemyCards);
     // Example: Fetch initial data from an API
     // fetchInitialData();
-    fillHand();
+    newTurn();
   }, []);
 
   const calculateDamage = (playerCard, enemyCard) => {
@@ -152,6 +167,7 @@ const CardGame = () => {
     }
   };
 
+  //Basically html
   return (
     <div onMouseUp={onMouseUp}>
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
@@ -179,6 +195,7 @@ const CardGame = () => {
                           attack={card.attack}
                           health={card.health}
                           imageSource={card.imageSource}
+                          readyToAttack={card.readyToAttack}
                         />
                       </div>
                     )}
@@ -210,6 +227,7 @@ const CardGame = () => {
                           attack={card.attack}
                           health={card.health}
                           imageSource={card.imageSource}
+                          readyToAttack={card.readyToAttack}
                         />
                       </div>
                     )}
@@ -220,6 +238,7 @@ const CardGame = () => {
             </div>
           )}
         </Droppable>
+        <button onClick={newTurn}>End turn</button>
 
         {/* Player's Hand */}
         <Droppable key="playerhand" droppableId="hand" direction="horizontal">
@@ -242,6 +261,7 @@ const CardGame = () => {
                           attack={card.attack}
                           health={card.health}
                           imageSource={card.imageSource}
+                          readyToAttack={card.readyToAttack}
                         />
                       </div>
                     )}

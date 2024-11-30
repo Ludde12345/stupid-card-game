@@ -1,6 +1,6 @@
 .card-container {
   width: 150px;
-  height: 200px;
+  height: 210px;
   background: linear-gradient(135deg, #03b8ff, #410077);
   border: 8px solid #dce474;
   border-radius: 10px;
@@ -15,6 +15,31 @@
   text-align: center;
   margin: 10px;
   cursor: grab;
+}
+
+.card-container-ready-to-attack {
+  width: 150px;
+  height: 210px;
+  background: linear-gradient(135deg, #03b8ff, #410077);
+  border: 8px solid #dce474;
+  border-radius: 10px;
+  color: white;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  text-align: center;
+  margin: 10px;
+  cursor: grab;
+
+  /* Glow */
+  box-shadow:
+    0 0 1px 1px #f5d9d9,  /* inner white */
+    0 0 3px 3px rgb(174, 0, 255), /* middle magenta */
+    0 0 6px 6px rgb(0, 217, 255); /* outer cyan */
 }
 
 .card-container:hover {
