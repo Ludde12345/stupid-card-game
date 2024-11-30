@@ -5,6 +5,7 @@
         "manaCost": 4,
         "attack": 4,
         "health": 6,
+        "imageSource": "/images/Vacume.png",
         "elements": [
             "cleanliness",
             "electronic"
@@ -16,6 +17,7 @@
         "manaCost": 2,
         "attack": 2,
         "health": 2,
+        "imageSource": "/images/Mopp.png",
         "elements": [
             "cleanliness",
             "physical",
@@ -28,6 +30,7 @@
         "manaCost": 3,
         "attack": 5,
         "health": 2,
+        "imageSource": "/images/Frying pan.png",
         "elements": [
             "cooking",
             "physical"
@@ -39,6 +42,7 @@
         "manaCost": 3,
         "attack": 2,
         "health": 4,
+        "imageSource": "/images/Hardhat.png",
         "elements": [
             "infrastructure",
             "defense"

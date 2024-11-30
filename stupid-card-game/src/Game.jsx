@@ -178,6 +178,7 @@ const CardGame = () => {
                           manaCost={card.manaCost}
                           attack={card.attack}
                           health={card.health}
+                          imageSource={card.imageSource}
                         />
                       </div>
                     )}
@@ -208,6 +209,7 @@ const CardGame = () => {
                           manaCost={card.manaCost}
                           attack={card.attack}
                           health={card.health}
+                          imageSource={card.imageSource}
                         />
                       </div>
                     )}
@@ -239,6 +241,7 @@ const CardGame = () => {
                           manaCost={card.manaCost}
                           attack={card.attack}
                           health={card.health}
+                          imageSource={card.imageSource}
                         />
                       </div>
                     )}
