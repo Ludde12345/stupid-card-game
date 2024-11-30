@@ -1,113 +1,42 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import io from 'socket.io-client';
 import Card from './Card';
 import './Game.css'; // Import the new CSS file
-import cards from './CardStats.json';
 
-function createCard(nameOfCard) {
-  const cardToReturn = cards.find(card => card.name === nameOfCard);
+const socket = io('http://localhost:6969');
 
-  if (cardToReturn) {
-    // Create a new object based on the card, and add the id to it
-    return {
-      ...cardToReturn,
-      id: String(Math.random())  // Add id to the new object
-    };
-  }
-
-  return null;  // Returns null if the card was not found
-}
-
-const deck =
-  [
-    createCard("Vacume"),
-    createCard("Vacume"),
-    createCard("Mopp"),
-    createCard("Mopp"),
-    createCard("Mopp"),
-    createCard("Pan"),
-    createCard("Pan"),
-    createCard("Hardhat"),
-    createCard("Hardhat"),
-    createCard("Hardhat")
-  ]
-
-
-const CardGame = () => {
-  const [enemyCards, setEnemyCards] = useState([]);
+const CardGame = ({ playerId }) => {
+  const [enemyBoard, setEnemyBoard] = useState([]);
   const [playerHand, setPlayerHand] = useState([]);
-  const [boardCards, setBoardCards] = useState([]);
+  const [playerBoard, setPlayerBoard] = useState([]);
   const enemyCardRefs = useRef([]);
   const [draggingCard, setDraggingCard] = useState(null);
-  const [playerDeck, setPlayerDeck] = useState(deck);
-
-  let manaAmount = 0;
-
-  function fillHand() {
-    const newHand = [...playerHand];  // Create a copy of the current playerHand
-    const newDeck = [...playerDeck];  // Create a copy of the current playerDeck
-
-    while (newHand.length < 5 && newDeck.length > 0) {  // Ensure we don't exceed 5 cards in hand
-      const chosenNumber = Math.floor(Math.random() * newDeck.length);
-      const chosenCard = newDeck[chosenNumber];
-      chosenCard.readyToAttack = false;
-
-      newHand.push(chosenCard);  // Add chosen card to hand
-      newDeck.splice(chosenNumber, 1);  // Remove the chosen card from the deck
-    }
-
-    setPlayerHand(newHand);  // Update the player hand state
-    setPlayerDeck(newDeck);  // Update the player deck state
-  }
-
-  function newTurn()
-  {
-    console.log("new turn");
-    fillHand();
-    manaAmount = 6;
-
-    //Make cards in hand ready to attack
-    boardCards.forEach(card => {
-      card.readyToAttack = true;
-    });
-  }
 
   useEffect(() => {
-    // Initialize data or perform any setup tasks here
-    console.log('Component mounted');
-    console.log('Player cards:', enemyCards);
-    // Example: Fetch initial data from an API
-    // fetchInitialData();
-    newTurn();
-  }, []);
+    socket.on('gameUpdate', (state) => {
+      console.log('Received game state:', state);
+      setEnemyBoard(state.players[playerId === 'player1' ? 'player2' : 'player1'].board);
+      setPlayerHand(state.players[playerId].hand);
+      setPlayerBoard(state.players[playerId].board);
+    });
+
+    // Request the current game state when the component mounts
+    socket.emit('requestGameState');
+
+    return () => {
+      socket.off('gameUpdate');
+    };
+  }, [playerId]);
 
   const calculateDamage = (playerCard, enemyCard) => {
-    // Implement your damage calculation logic here
-    const updatedEnemyCards = enemyCards.map(card => {
-      if (card.id === enemyCard.id) {
-        return { ...card, health: card.health - playerCard.attack };
-      }
-      return card;
-    }).filter(card => card.health > 0);
-
-    const updatedPlayerCards = playerHand.map(card => {
-      if (card.id === playerCard.id) {
-        return { ...card, health: card.health - enemyCard.attack };
-      }
-      return card;
-    }).filter(card => card.health > 0);
-
-    setEnemyCards(updatedEnemyCards);
-    setPlayerHand(updatedPlayerCards);
-
-    console.log(`Calculating damage between ${playerCard.name} and ${enemyCard.name}`);
-    console.log(`Enemy card health: ${enemyCard.health}`);
-    console.log(`Player card health: ${playerCard.health}`);
+    // Emit an event to the server to update the game state
+    socket.emit('dealDamage', { playerId, playerCardId: playerCard.id, enemyCardId: enemyCard.id });
   };
 
   const onDragStart = (start) => {
     const { source } = start;
-    const sourceList = source.droppableId === 'board' ? [...boardCards] : [...playerHand];
+    const sourceList = source.droppableId === 'board' ? [...playerBoard] : [...playerHand];
     const movedCard = sourceList[source.index];
     setDraggingCard(movedCard);
   };
@@ -123,21 +52,24 @@ const CardGame = () => {
 
     // Handle movement within the same list
     if (source.droppableId === destination.droppableId) {
-      const list = source.droppableId === 'hand' ? [...playerHand] : [...boardCards];
-      const setList = source.droppableId === 'hand' ? setPlayerHand : setBoardCards;
+      const list = source.droppableId === 'hand' ? [...playerHand] : [...playerBoard];
+      const setList = source.droppableId === 'hand' ? setPlayerHand : setPlayerBoard;
       const [movedCard] = list.splice(source.index, 1);
       list.splice(destination.index, 0, movedCard);
       setList(list);
     } else {
       // Handle movement between lists
-      const sourceList = source.droppableId === 'hand' ? [...playerHand] : [...boardCards];
-      const setSourceList = source.droppableId === 'hand' ? setPlayerHand : setBoardCards;
-      const destinationList = destination.droppableId === 'board' ? [...boardCards] : [...playerHand];
-      const setDestinationList = destination.droppableId === 'board' ? setBoardCards : setPlayerHand;
+      const sourceList = source.droppableId === 'hand' ? [...playerHand] : [...playerBoard];
+      const setSourceList = source.droppableId === 'hand' ? setPlayerHand : setPlayerBoard;
+      const destinationList = destination.droppableId === 'board' ? [...playerBoard] : [...playerHand];
+      const setDestinationList = destination.droppableId === 'board' ? setPlayerBoard : setPlayerHand;
       const [movedCard] = sourceList.splice(source.index, 1);
       destinationList.splice(destination.index, 0, movedCard);
       setSourceList(sourceList);
       setDestinationList(destinationList);
+
+      // Emit an event to the server to update the game state
+      socket.emit('moveCard', { playerId, cardId: movedCard.id, source: source.droppableId, destination: destination.droppableId });
     }
 
     setDraggingCard(null);
@@ -157,7 +89,7 @@ const CardGame = () => {
           const rect = enemyCardRef.getBoundingClientRect();
           console.log(`Enemy card ${i} rect:`, rect);
           if (mouseX >= rect.left && mouseX <= rect.right && mouseY >= rect.top && mouseY <= rect.bottom) {
-            const enemyCard = enemyCards[i];
+            const enemyCard = enemyBoard[i];
             console.log(`Dropping ${draggingCard.name} on ${enemyCard.name}`);
             calculateDamage(draggingCard, enemyCard);
             return;
@@ -167,17 +99,26 @@ const CardGame = () => {
     }
   };
 
-  //Basically html
+  const resetGame = () => {
+    socket.emit('resetGame');
+  };
+
+  const endTurn = () => {
+    socket.emit('endTurn');
+  };
+
   return (
     <div onMouseUp={onMouseUp}>
+      <button className="reset-button" onClick={resetGame}>Reset Game</button>
+      <button className="end-turn-button" onClick={endTurn}>End Turn</button>
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        {/* Enemy's Cards */}
-        <Droppable droppableId="enemy" direction="horizontal" isCombineEnabled isDropDisabled>
+        {/* Enemy's Board */}
+        <Droppable droppableId="enemyBoard" direction="horizontal" isCombineEnabled isDropDisabled>
           {(provided) => (
             <div className="enemy-cards" ref={provided.innerRef} {...provided.droppableProps}>
-              <h3>Enemy's Cards</h3>
+              <h3>Enemy's Board</h3>
               <div className="card-list">
-                {enemyCards.map((card, index) => (
+                {enemyBoard.map((card, index) => (
                   <Draggable key={card.id} draggableId={card.id} index={index} isDragDisabled>
                     {(provided) => (
                       <div
@@ -201,18 +142,19 @@ const CardGame = () => {
                     )}
                   </Draggable>
                 ))}
+                {provided.placeholder}
               </div>
             </div>
           )}
         </Droppable>
 
         {/* Player's Game Board */}
-        <Droppable key="playerboard" droppableId="board" direction="horizontal" isCombineEnabled>
+        <Droppable key="playerBoard" droppableId="board" direction="horizontal" isCombineEnabled>
           {(provided) => (
             <div className="board-cards" ref={provided.innerRef} {...provided.droppableProps}>
               <h3>Your Board</h3>
               <div className="card-list">
-                {boardCards.map((card, index) => (
+                {playerBoard.map((card, index) => (
                   <Draggable key={card.id} draggableId={card.id} index={index}>
                     {(provided) => (
                       <div
@@ -238,12 +180,10 @@ const CardGame = () => {
             </div>
           )}
         </Droppable>
-        <button onClick={newTurn}>End turn</button>
-
         {/* Player's Hand */}
-        <Droppable key="playerhand" droppableId="hand" direction="horizontal">
+        <Droppable key="playerHand" droppableId="hand" direction="horizontal">
           {(provided) => (
-            <div className="player-hand" ref={provided.innerRef} {...provided.droppableProps}>
+            <div className="player-hand fixed" ref={provided.innerRef} {...provided.droppableProps}>
               <h3>Your Hand</h3>
               <div className="card-list">
                 {playerHand.map((card, index) => (
@@ -272,6 +212,7 @@ const CardGame = () => {
             </div>
           )}
         </Droppable>
+
       </DragDropContext>
     </div>
   );

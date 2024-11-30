@@ -2,7 +2,7 @@ import React from "react";
 import "./Card.css"; // Create a CSS file for styling
 
 const Card = ({ name, manaCost, attack, health, imageSource, readyToAttack }) => {
-  //const imageUrl = imageSource ?  require(`${imageSource}`) : "";  // This requires the image dynamically
+  //const imageUrl = imageSource ?  require(${imageSource}) : "";  // This requires the image dynamically
   return (
     <div className = {readyToAttack ? "card-container-ready-to-attack" : "card-container"}>
       <div className="card-header">
@@ -10,7 +10,7 @@ const Card = ({ name, manaCost, attack, health, imageSource, readyToAttack }) =>
         <span className="mana-cost">{manaCost}</span>
       </div>
       <div className="card-body">
-        <img class="card-image" src={imageSource}  alt=""></img>
+        <img className="card-image" src={imageSource}  alt=""></img>
 
       </div>
       <div className="card-footer">

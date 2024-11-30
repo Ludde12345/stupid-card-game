@@ -1,18 +1,22 @@
-import logo from './logo.svg';
+import React, { useState } from 'react';
 import './App.css';
 import CardGame from './Game';
-import Card from './Card';
+import ConnectPage from './JoinGamePage';
 
 function App() {
+  const [playerId, setPlayerId] = useState(null);
+
+  const handleConnect = (id) => {
+    setPlayerId(id);
+  };
+
   return (
     <div className="App">
-      <CardGame></CardGame>
-      <Card
-        name={"test"}
-        manaCost={5}
-        attack={3}
-        health={2}
-      />
+      {!playerId ? (
+        <ConnectPage onConnect={handleConnect} />
+      ) : (
+        <CardGame playerId={playerId} />
+      )}
     </div>
   );
 }
