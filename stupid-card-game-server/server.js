@@ -71,17 +71,17 @@ function fillHand(playerId) {
 
 function newTurn() {
   console.log("new turn");
-  fillHand('player1');
-  fillHand('player2');
-  gameState.players.player1.manaAmount = 6;
-  gameState.players.player2.manaAmount = 6;
+  const currentPlayer = gameState.turn;
+  const nextPlayer = currentPlayer === 'player1' ? 'player2' : 'player1';
 
-  gameState.players.player1.board.forEach(card => {
+  fillHand(nextPlayer);
+  gameState.players[nextPlayer].manaAmount = 6;
+
+  gameState.players[nextPlayer].board.forEach(card => {
     card.readyToAttack = true;
   });
-  gameState.players.player2.board.forEach(card => {
-    card.readyToAttack = true;
-  });
+
+  gameState.turn = nextPlayer;
 
   io.emit('gameUpdate', gameState);
 }
@@ -126,8 +126,9 @@ io.on('connection', (socket) => {
     const playerCard = player.board.find(card => card.id === playerCardId);
     const enemyCard = enemy.board.find(card => card.id === enemyCardId);
 
-    if (playerCard && enemyCard) {
+    if (playerCard && enemyCard && playerCard.readyToAttack) {
       enemyCard.health -= playerCard.attack;
+      playerCard.readyToAttack = false; // Set readyToAttack to false after attacking
 
       // Remove dead cards
       enemy.board = enemy.board.filter(card => card.health > 0);
@@ -146,6 +147,12 @@ io.on('connection', (socket) => {
       if (cardIndex !== -1) {
         const [movedCard] = player.hand.splice(cardIndex, 1); // Remove the card from the hand
         player.board.push(movedCard); // Add the card to the board
+      }
+    } else if (source === 'board' && destination === 'hand') {
+      const cardIndex = player.board.findIndex(card => card.id === cardId && card.readyToAttack);
+      if (cardIndex !== -1) {
+        const [movedCard] = player.board.splice(cardIndex, 1); // Remove the card from the board
+        player.hand.push(movedCard); // Add the card to the hand
       }
     }
 

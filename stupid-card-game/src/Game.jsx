@@ -10,6 +10,7 @@ const CardGame = ({ playerId }) => {
   const [enemyBoard, setEnemyBoard] = useState([]);
   const [playerHand, setPlayerHand] = useState([]);
   const [playerBoard, setPlayerBoard] = useState([]);
+  const [currentTurn, setCurrentTurn] = useState('player1');
   const enemyCardRefs = useRef([]);
   const [draggingCard, setDraggingCard] = useState(null);
   const [manaAmount, setManaAmount] = useState(6);
@@ -20,6 +21,7 @@ const CardGame = ({ playerId }) => {
       setEnemyBoard(state.players[playerId === 'player1' ? 'player2' : 'player1'].board);
       setPlayerHand(state.players[playerId].hand);
       setPlayerBoard(state.players[playerId].board);
+      setCurrentTurn(state.turn);
     });
 
     // Request the current game state when the component mounts
@@ -138,7 +140,7 @@ const CardGame = ({ playerId }) => {
   return (
     <div onMouseUp={onMouseUp}>
       <button className="reset-button" onClick={resetGame}>Reset Game</button>
-      <button className="end-turn-button" onClick={endTurn}>End Turn</button>
+      <button className="end-turn-button" onClick={endTurn} disabled={currentTurn !== playerId}>End Turn</button>
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         {/* Enemy's Board */}
         <Droppable droppableId="enemyBoard" direction="horizontal" isCombineEnabled isDropDisabled>
@@ -175,7 +177,6 @@ const CardGame = ({ playerId }) => {
             </div>
           )}
         </Droppable>
-
         {/* Player's Game Board */}
         <Droppable key="playerBoard" droppableId="board" direction="horizontal" isCombineEnabled>
           {(provided) => (
@@ -183,7 +184,7 @@ const CardGame = ({ playerId }) => {
               <h3>Your Board</h3>
               <div className="card-list">
                 {playerBoard.map((card, index) => (
-                  <Draggable key={card.id} draggableId={card.id} index={index}>
+                  <Draggable key={card.id} draggableId={card.id} index={index} isDragDisabled={currentTurn !== playerId || !card.readyToAttack}>
                     {(provided) => (
                       <div
                         ref={provided.innerRef}
