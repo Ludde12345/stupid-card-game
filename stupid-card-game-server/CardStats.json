@@ -2,9 +2,9 @@
     {
         "id": null,
         "name": "Vacume",
-        "manaCost": 4,
+        "manaCost": 3,
         "attack": 4,
-        "health": 6,
+        "health": 12,
         "imageSource": "/images/Vacume.png",
         "elements": [
             "cleanliness",
@@ -15,8 +15,8 @@
         "id": null,
         "name": "Mopp",
         "manaCost": 2,
-        "attack": 2,
-        "health": 2,
+        "attack": 4,
+        "health": 6,
         "imageSource": "/images/Mopp.png",
         "elements": [
             "cleanliness",
@@ -29,7 +29,7 @@
         "name": "Pan",
         "manaCost": 3,
         "attack": 5,
-        "health": 2,
+        "health": 8,
         "imageSource": "/images/Frying pan.png",
         "elements": [
             "cooking",
@@ -39,13 +39,61 @@
     {
         "id": null,
         "name": "Hardhat",
-        "manaCost": 3,
+        "manaCost": 2,
         "attack": 2,
-        "health": 4,
+        "health": 15,
         "imageSource": "/images/Hardhat.png",
         "elements": [
             "infrastructure",
             "defense"
+        ]
+    },
+    {
+        "id": null,
+        "name": "Comb",
+        "manaCost": 1,
+        "attack": 3,
+        "health": 2,
+        "imageSource": "/images/Comb.png",
+        "elements": [
+            "cleanliness",
+            "physical"
+        ]
+    },
+    {
+        "id": null,
+        "name": "Tophat",
+        "manaCost": 4,
+        "attack": 5,
+        "health": 10,
+        "imageSource": "/images/Tophat.png",
+        "elements": [
+            "cleanliness",
+            "physical"
+        ]
+    },
+    {
+        "id": null,
+        "name": "Roomba",
+        "manaCost": 5,
+        "attack": 4,
+        "health": 20,
+        "imageSource": "/images/Roomba.png",
+        "elements": [
+            "cleanliness",
+            "physical"
+        ]
+    },
+    {
+        "id": null,
+        "name": "Bodyguard",
+        "manaCost": 3,
+        "attack": 3,
+        "health": 14,
+        "imageSource": "/images/Bodyguard.png",
+        "elements": [
+            "cleanliness",
+            "physical"
         ]
     }
 ]
