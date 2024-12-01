@@ -43,7 +43,19 @@ const startingDeck = [
   "Pan",
   "Hardhat",
   "Hardhat",
-  "Hardhat"
+  "Hardhat",
+  "Comb",
+  "Comb",
+  "Comb",
+  "Comb",
+  "Comb",
+  "Tophat",
+  "Tophat",
+  "Tophat",
+  "Roomba",
+  "Bodyguard",
+  "Bodyguard",
+  "Bodyguard",
 ];
 
 function initDeck(playerId) {
